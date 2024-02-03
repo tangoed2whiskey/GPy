@@ -40,3 +40,14 @@ class ExactBimodalInference(LatentFunctionInference):
         log_marginal += np.log(n - dy) - np.log(n)
 
         # Gradients
+        if n - dy + beta <= 0:
+            raise ValueError(
+                "Bimodal distribution has an unsupported normalization for the kernel: "
+                "Try using a kernel with diag(K(X))=[1,1,...]"
+            )
+        dL_dK = tdot(alpha) * (0.5 + 1 / (n - dy + beta)) - 0.5 * D * Wi
+        dL_dn = -beta / (n - dy + beta) / (n - dy) - 1 / n - 1 / (n - dy)
+        dL_dm = alpha * (1 + 2 / (n - dy + beta))
+        gradients = {"dL_dK": dL_dK, "dL_dn": dL_dn, "dL_dm": dL_dm}
+
+        return posterior, log_marginal, gradients
