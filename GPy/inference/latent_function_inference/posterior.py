@@ -18,42 +18,53 @@ class Posterior(object):
 
     """
 
-    def __init__(self, woodbury_chol=None, woodbury_vector=None, K=None, mean=None, cov=None, K_chol=None,
-                 woodbury_inv=None, prior_mean=0):
+    def __init__(
+        self,
+        woodbury_chol=None,
+        woodbury_vector=None,
+        K=None,
+        mean=None,
+        cov=None,
+        K_chol=None,
+        woodbury_inv=None,
+        prior_mean=0,
+    ):
         """
-        woodbury_chol : a lower triangular matrix L that satisfies posterior_covariance = K - K L^{-T} L^{-1} K
-        woodbury_vector : a matrix (or vector, as Nx1 matrix) M which satisfies posterior_mean = K M
-        K : the proir covariance (required for lazy computation of various quantities)
-        mean : the posterior mean
-        cov : the posterior covariance
+         woodbury_chol : a lower triangular matrix L that satisfies posterior_covariance = K - K L^{-T} L^{-1} K
+         woodbury_vector : a matrix (or vector, as Nx1 matrix) M which satisfies posterior_mean = K M
+         K : the proir covariance (required for lazy computation of various quantities)
+         mean : the posterior mean
+         cov : the posterior covariance
 
-        Not all of the above need to be supplied! You *must* supply:
+         Not all of the above need to be supplied! You *must* supply:
 
-          K (for lazy computation)
-          or
-          K_chol (for lazy computation)
+           K (for lazy computation)
+           or
+           K_chol (for lazy computation)
 
-       You may supply either:
+        You may supply either:
 
-          woodbury_chol
-          woodbury_vector
+           woodbury_chol
+           woodbury_vector
 
-        Or:
+         Or:
 
-          mean
-          cov
+           mean
+           cov
 
-        Of course, you can supply more than that, but this class will lazily
-        compute all other quantites on demand.
+         Of course, you can supply more than that, but this class will lazily
+         compute all other quantites on demand.
 
         """
         # obligatory
         self._K = K
 
-        if ((woodbury_chol is not None) and (woodbury_vector is not None)) \
-                or ((woodbury_inv is not None) and (woodbury_vector is not None)) \
-                or ((woodbury_inv is not None) and (mean is not None)) \
-                or ((mean is not None) and (cov is not None)):
+        if (
+            ((woodbury_chol is not None) and (woodbury_vector is not None))
+            or ((woodbury_inv is not None) and (woodbury_vector is not None))
+            or ((woodbury_inv is not None) and (mean is not None))
+            or ((mean is not None) and (cov is not None))
+        ):
             pass  # we have sufficient to compute the posterior
         else:
             raise ValueError("insufficient information to compute the posterior")
@@ -101,8 +112,11 @@ class Posterior(object):
         if self._covariance is None:
             # LiK, _ = dtrtrs(self.woodbury_chol, self._K, lower=1)
             self._covariance = (
-            np.atleast_3d(self._K) - np.tensordot(np.dot(np.atleast_3d(self.woodbury_inv).T, self._K), self._K,
-                                                  [1, 0]).T).squeeze()
+                np.atleast_3d(self._K)
+                - np.tensordot(
+                    np.dot(np.atleast_3d(self.woodbury_inv).T, self._K), self._K, [1, 0]
+                ).T
+            ).squeeze()
             # self._covariance = self._K - self._K.dot(self.woodbury_inv).dot(self._K)
         return self._covariance
 
@@ -117,7 +131,9 @@ class Posterior(object):
         """
         # ndim == 3 is a model for missing data
         if self.woodbury_chol.ndim != 2:
-            raise RuntimeError("This method does not support posterior for missing data models")
+            raise RuntimeError(
+                "This method does not support posterior for missing data models"
+            )
 
         Kx1 = kern.K(X, X1)
         Kx2 = kern.K(X, X2)
@@ -233,8 +249,9 @@ class Posterior(object):
                 elif woodbury_inv.ndim == 3:  # Missing data
                     var = np.empty((Kxx.shape[0], Kxx.shape[1], woodbury_inv.shape[2]))
                     from ...util.linalg import mdot
+
                     for i in range(var.shape[2]):
-                        var[:, :, i] = (Kxx - mdot(Kx.T, woodbury_inv[:, :, i], Kx))
+                        var[:, :, i] = Kxx - mdot(Kx.T, woodbury_inv[:, :, i], Kx)
                 var = var
             else:
                 Kxx = kern.Kdiag(Xnew)
@@ -243,7 +260,9 @@ class Posterior(object):
                 elif woodbury_inv.ndim == 3:  # Missing data
                     var = np.empty((Kxx.shape[0], woodbury_inv.shape[2]))
                     for i in range(var.shape[1]):
-                        var[:, i] = (Kxx - (np.sum(np.dot(woodbury_inv[:, :, i].T, Kx) * Kx, 0)))
+                        var[:, i] = Kxx - (
+                            np.sum(np.dot(woodbury_inv[:, :, i].T, Kx) * Kx, 0)
+                        )
                 var = var
                 var = np.clip(var, 1e-15, np.inf)
         else:
@@ -256,12 +275,15 @@ class Posterior(object):
 
             if full_cov:
                 raise NotImplementedError(
-                    "Full covariance for Sparse GP predicted with uncertain inputs not implemented yet.")
+                    "Full covariance for Sparse GP predicted with uncertain inputs not implemented yet."
+                )
                 var = np.zeros((Xnew.shape[0], la.shape[1], la.shape[1]))
                 di = np.diag_indices(la.shape[1])
             else:
                 tmp = psi2_star - psi1_star[:, :, None] * psi1_star[:, None, :]
-                var = (tmp.reshape(-1, M).dot(la).reshape(N, M, D) * la[None, :, :]).sum(1) + psi0_star[:, None]
+                var = (
+                    tmp.reshape(-1, M).dot(la).reshape(N, M, D) * la[None, :, :]
+                ).sum(1) + psi0_star[:, None]
                 if woodbury_inv.ndim == 2:
                     var += -psi2_star.reshape(N, -1).dot(woodbury_inv.flat)[:, None]
                 else:
@@ -272,7 +294,6 @@ class Posterior(object):
 
 class PosteriorExact(Posterior):
     def _raw_predict(self, kern, Xnew, pred_var, full_cov=False):
-
         Kx = kern.K(pred_var, Xnew)
         mu = np.dot(Kx.T, self.woodbury_vector)
         if len(mu.shape) == 1:
@@ -283,10 +304,12 @@ class PosteriorExact(Posterior):
                 tmp = dtrtrs(self._woodbury_chol, Kx)[0]
                 var = Kxx - tdot(tmp.T)
             elif self._woodbury_chol.ndim == 3:  # Missing data
-                var = np.empty((Kxx.shape[0], Kxx.shape[1], self._woodbury_chol.shape[2]))
+                var = np.empty(
+                    (Kxx.shape[0], Kxx.shape[1], self._woodbury_chol.shape[2])
+                )
                 for i in range(var.shape[2]):
                     tmp = dtrtrs(self._woodbury_chol[:, :, i], Kx)[0]
-                    var[:, :, i] = (Kxx - tdot(tmp.T))
+                    var[:, :, i] = Kxx - tdot(tmp.T)
             var = var
         else:
             Kxx = kern.Kdiag(Xnew)
@@ -297,14 +320,13 @@ class PosteriorExact(Posterior):
                 var = np.empty((Kxx.shape[0], self._woodbury_chol.shape[2]))
                 for i in range(var.shape[1]):
                     tmp = dtrtrs(self._woodbury_chol[:, :, i], Kx)[0]
-                    var[:, i] = (Kxx - np.square(tmp).sum(0))
+                    var[:, i] = Kxx - np.square(tmp).sum(0)
             var = var
         return mu, var
 
 
 class PosteriorEP(Posterior):
     def _raw_predict(self, kern, Xnew, pred_var, full_cov=False):
-
         Kx = kern.K(pred_var, Xnew)
         mu = np.dot(Kx.T, self.woodbury_vector)
         if len(mu.shape) == 1:
@@ -316,10 +338,12 @@ class PosteriorEP(Posterior):
                 tmp = np.dot(Kx.T, np.dot(self._woodbury_inv, Kx))
                 var = Kxx - tmp
             elif self._woodbury_inv.ndim == 3:  # Missing data
-                var = np.empty((Kxx.shape[0], Kxx.shape[1], self._woodbury_inv.shape[2]))
+                var = np.empty(
+                    (Kxx.shape[0], Kxx.shape[1], self._woodbury_inv.shape[2])
+                )
                 for i in range(var.shape[2]):
                     tmp = np.dot(Kx.T, np.dot(self._woodbury_inv[:, :, i], Kx))
-                    var[:, :, i] = (Kxx - tmp)
+                    var[:, :, i] = Kxx - tmp
             var = var
         else:
             Kxx = kern.Kdiag(Xnew)
@@ -330,7 +354,7 @@ class PosteriorEP(Posterior):
                 var = np.empty((Kxx.shape[0], self._woodbury_inv.shape[2]))
                 for i in range(var.shape[1]):
                     tmp = (Kx * np.dot(self._woodbury_inv[:, :, i], Kx)).sum(0)
-                    var[:, i] = (Kxx - tmp)
+                    var[:, i] = Kxx - tmp
             var = var
 
         return mu, var
@@ -342,8 +366,42 @@ class StudentTPosterior(PosteriorExact):
         self.nu = deg_free
 
     def _raw_predict(self, kern, Xnew, pred_var, full_cov=False):
-        mu, var = super(StudentTPosterior, self)._raw_predict(kern, Xnew, pred_var, full_cov)
+        mu, var = super(StudentTPosterior, self)._raw_predict(
+            kern, Xnew, pred_var, full_cov
+        )
         beta = np.sum(self.woodbury_vector * self.mean)
         N = self.woodbury_vector.shape[0]
         tp_var_scale = (self.nu + beta - 2) / (self.nu + N - 2)
         return mu, tp_var_scale * var
+
+
+class BimodalPosterior(PosteriorExact):
+    def __init__(self, n, **kwargs):
+        super().__init__(**kwargs)
+        self.n = n
+
+    def _raw_predict(self, kern, Xnew, pred_var, full_cov=False):
+        mu, var = super()._raw_predict(kern, Xnew, pred_var, full_cov)
+        y_squared = np.sum(self.woodbury_vector * self.mean)
+        dy = self.woodbury_vector.shape[0]
+        if self.n + y_squared - dy <= 0:
+            raise ValueError(
+                "Bimodal distribution has an unsupported normalization for the kernel: "
+                "Try using a kernel with diag(K(X))=[1,1,...]"
+            )
+        else:
+            bimodal_var_scale = 1 + (2 / (self.n + y_squared - dy))
+        return mu, bimodal_var_scale * var
+
+
+class HeavisidePosterior(PosteriorExact):
+    def __init__(self, n, **kwargs):
+        super().__init__(**kwargs)
+        self.n = n
+
+    def _raw_predict(self, kern, Xnew, pred_var, full_cov=False):
+        mu, var = super()._raw_predict(kern, Xnew, pred_var, full_cov)
+        y_squared = np.sum(self.woodbury_vector * self.mean)
+        dy = self.woodbury_vector.shape[0]
+        heaviside_var_scale = (self.n - y_squared) / (self.n - dy + 2)
+        return mu, heaviside_var_scale * var
