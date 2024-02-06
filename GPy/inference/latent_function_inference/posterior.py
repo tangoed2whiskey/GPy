@@ -391,7 +391,7 @@ class BimodalPosterior(PosteriorExact):
             )
         else:
             bimodal_var_scale = 1 + (2 / (self.n + y_squared - dy))
-        return mu, bimodal_var_scale * var
+        return mu, bimodal_var_scale * var, var
 
 
 class HeavisidePosterior(PosteriorExact):
@@ -404,4 +404,4 @@ class HeavisidePosterior(PosteriorExact):
         y_squared = np.sum(self.woodbury_vector * self.mean)
         dy = self.woodbury_vector.shape[0]
         heaviside_var_scale = (self.n - y_squared) / (self.n - dy + 2)
-        return mu, heaviside_var_scale * var
+        return mu, heaviside_var_scale * var, var
