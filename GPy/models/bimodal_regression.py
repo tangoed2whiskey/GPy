@@ -201,7 +201,7 @@ class BimodalRegression(Model):
             p(f*|X*, X, Y) = \int^{\inf}_{\inf} p(f*|f,X*)p(f|X,Y) df
 
         """
-        mu, var = self.posterior._raw_predict(
+        mu, var, Sigma = self.posterior._raw_predict(
             kern=self.kern if kern is None else kern,
             Xnew=Xnew,
             pred_var=self._predictive_variable,
@@ -209,7 +209,7 @@ class BimodalRegression(Model):
         )
         if self.mean_function is not None:
             mu += self.mean_function.f(Xnew)
-        return mu, var
+        return mu, var, Sigma
 
     def predict(self, Xnew, full_cov=False, kern=None, **kwargs):
         """
