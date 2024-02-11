@@ -40,7 +40,7 @@ class HeavisideRegression(Model):
         X,
         Y,
         kernel=None,
-        n=100.0,
+        n=2.0,
         normalizer=None,
         mean_function=None,
         name="Heaviside process regression",
@@ -94,7 +94,10 @@ class HeavisideRegression(Model):
             self.link_parameter(mean_function)
 
         # Shape parameter
-        self.nminusd = Param("n-d", float(n - self.num_data), Logexp())
+        if n > self.num_data:
+            self.nminusd = Param("n-d", float(n - self.num_data), Logexp())
+        else:
+            self.nminusd = Param("n-d", float(n), Logexp())
         self.link_parameter(self.nminusd)
 
         # Inference
