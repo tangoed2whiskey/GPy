@@ -35,6 +35,7 @@ etc.
 
 """
 
+
 class LatentFunctionInference(object):
     def on_optimization_start(self):
         """
@@ -70,15 +71,18 @@ class LatentFunctionInference(object):
         """
 
         import copy
+
         input_dict = copy.deepcopy(input_dict)
-        inference_class = input_dict.pop('class')
+        inference_class = input_dict.pop("class")
         import GPy
+
         inference_class = eval(inference_class)
         return inference_class._build_from_input_dict(inference_class, input_dict)
 
     @staticmethod
     def _build_from_input_dict(inference_class, input_dict):
         return inference_class(**input_dict)
+
 
 class InferenceMethodList(LatentFunctionInference, list):
 
@@ -100,9 +104,12 @@ class InferenceMethodList(LatentFunctionInference, list):
         for inf in state:
             self.append(inf)
 
+
 from .exact_gaussian_inference import ExactGaussianInference
 from .exact_studentt_inference import ExactStudentTInference
-from .laplace import Laplace,LaplaceBlock
+from .exact_bimodal_inference import ExactBimodalInference
+from .exact_heaviside_inference import ExactHeavisideInference
+from .laplace import Laplace, LaplaceBlock
 from GPy.inference.latent_function_inference.var_dtc import VarDTC
 from .expectation_propagation import EP, EPDTC
 from .dtc import DTC
