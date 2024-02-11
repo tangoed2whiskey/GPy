@@ -27,7 +27,10 @@ In some cases one end-user model inherits another e.g.
 from .gp_regression import GPRegression
 from .gp_classification import GPClassification
 from .sparse_gp_regression import SparseGPRegression
-from .sparse_gp_classification import SparseGPClassification, SparseGPClassificationUncertainInput
+from .sparse_gp_classification import (
+    SparseGPClassification,
+    SparseGPClassificationUncertainInput,
+)
 from .gplvm import GPLVM
 from .bcgplvm import BCGPLVM
 from .sparse_gplvm import SparseGPLVM
@@ -53,4 +56,6 @@ from .gp_grid_regression import GPRegressionGrid
 from .gp_multiout_regression import GPMultioutRegression
 from .gp_multiout_regression_md import GPMultioutRegressionMD
 from .tp_regression import TPRegression
+from .bimodal_regression import BimodalRegression
+from .heaviside_regression import HeavisideRegression
 from .multioutput_gp import MultioutputGP
