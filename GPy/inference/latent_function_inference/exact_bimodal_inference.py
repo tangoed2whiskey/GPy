@@ -35,7 +35,7 @@ class ExactBimodalInference(LatentFunctionInference):
         # Log marginal
         dy = Y.shape[0]
         D = Y.shape[1]
-        log_marginal = -0.5 * (np.log(2 * np.pi) + W_logdet + beta)
+        log_marginal = -0.5 * (dy * np.log(2.0 * np.pi) + W_logdet + beta)
         log_marginal += np.log(1 + beta / (n - dy))
         log_marginal += np.log(n - dy) - np.log(n)
 
@@ -47,7 +47,7 @@ class ExactBimodalInference(LatentFunctionInference):
             )
         dL_dK = tdot(alpha) * (0.5 + 1 / (n - dy + beta)) - 0.5 * D * Wi
         dL_dn = -beta / (n - dy + beta) / (n - dy) - 1 / n - 1 / (n - dy)
-        dL_dm = alpha * (1 + 2 / (n - dy + beta))
+        dL_dm = alpha * (1 - 2 / (n - dy + beta))
         gradients = {"dL_dK": dL_dK, "dL_dn": dL_dn, "dL_dm": dL_dm}
 
         return posterior, log_marginal, gradients
