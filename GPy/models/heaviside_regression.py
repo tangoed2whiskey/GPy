@@ -5,7 +5,7 @@ from ..core import Model
 from ..core.parameterization import Param
 from ..core import Mapping
 from ..kern import Kern, RBF
-from ..inference.latent_function_inference import ExactBimodalInference
+from ..inference.latent_function_inference import ExactHeavisideInference
 from ..util.normalizer import Standardize
 from ..util.root_find_cdf import approx_quantiles
 
@@ -18,9 +18,9 @@ from functools import partial
 import warnings
 
 
-class BimodalRegression(Model):
+class HeavisideRegression(Model):
     """
-    Bimodal Process model for regression.
+    Heaviside Process model for regression.
 
     :param X: input observations
     :param Y: observed values
@@ -43,7 +43,7 @@ class BimodalRegression(Model):
         n=100.0,
         normalizer=None,
         mean_function=None,
-        name="Bimodal process regression",
+        name="Heaviside process regression",
     ):
         super().__init__(name=name)
         # X
@@ -98,7 +98,7 @@ class BimodalRegression(Model):
         self.link_parameter(self.nminusd)
 
         # Inference
-        self.inference_method = ExactBimodalInference()
+        self.inference_method = ExactHeavisideInference()
         self.posterior = None
         self._log_marginal_likelihood = None
 
@@ -245,13 +245,12 @@ class BimodalRegression(Model):
 
     def __cdf_function(self, y, mu, sigma, n):
         normalised_y = (y - mu) / sigma
-        erf_term = 0.5 * (1 + special.erf(normalised_y / np.sqrt(2.0)))
-        exp_term = (
-            normalised_y
-            * np.exp(-0.5 * normalised_y * normalised_y)
-            / (n * np.sqrt(2 * np.pi))
+        prefactor = special.gamma(1 + n / 2) / (
+            np.sqrt(n * np.pi) * special.gamma(0.5 * (n + 1))
         )
-        return erf_term - exp_term
+        return 0.5 + prefactor * normalised_y * special.hyp2f1(
+            0.5, 0.5 * (1 - n), 1.5, normalised_y * normalised_y / n
+        )
 
     def predict_quantiles(self, X, quantiles=(2.5, 97.5), kern=None, **kwargs):
         """
@@ -294,6 +293,6 @@ class BimodalRegression(Model):
         **predict_kwargs
     ):
         """
-        Not implemented for Bimodal process regression
+        Not implemented for Heaviside process regression
         """
         raise NotImplementedError
