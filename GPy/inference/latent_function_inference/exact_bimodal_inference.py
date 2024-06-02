@@ -18,13 +18,13 @@ class ExactBimodalInference(LatentFunctionInference):
     summarizes the posterior
     """
 
-    def inference(self, kern, X, Y, n, mean_function=None, K=None):
+    def inference(self, kern, X, Y, n, mean_function=None, K=None, variance=0.1):
         m = 0 if mean_function is None else mean_function.f(X)
         K = kern.K(X) if K is None else K
 
         YYT_factor = Y - m
         Ky = K.copy()
-        diag.add(Ky, 1e-8)
+        diag.add(Ky, variance + 1e-8)
 
         # Posterior representation
         Wi, LW, LWi, W_logdet = pdinv(Ky)
@@ -35,6 +35,8 @@ class ExactBimodalInference(LatentFunctionInference):
         # Log marginal
         dy = Y.shape[0]
         D = Y.shape[1]
+        if n == dy:  # Edge case
+            n += dy * np.finfo(float).epsneg
         log_marginal = -0.5 * (dy * np.log(2.0 * np.pi) + W_logdet + beta)
         log_marginal += np.log(1 + beta / (n - dy))
         log_marginal += np.log(n - dy) - np.log(n)
@@ -46,8 +48,9 @@ class ExactBimodalInference(LatentFunctionInference):
                 "Try using a kernel with diag(K(X))=[1,1,...]"
             )
         dL_dK = tdot(alpha) * (0.5 + 1 / (n - dy + beta)) - 0.5 * D * Wi
-        dL_dn = -beta / (n - dy + beta) / (n - dy) - 1 / n - 1 / (n - dy)
+        dL_dn = 1 / (n - dy + beta) - 1 / n
         dL_dm = alpha * (1 - 2 / (n - dy + beta))
         gradients = {"dL_dK": dL_dK, "dL_dn": dL_dn, "dL_dm": dL_dm}
+        # print(n, beta, (n - dy + beta), log_marginal, dL_dn)
 
         return posterior, log_marginal, gradients

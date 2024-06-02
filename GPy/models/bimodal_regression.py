@@ -43,6 +43,7 @@ class BimodalRegression(Model):
         n=2.0,
         normalizer=None,
         mean_function=None,
+        noise_var=1.0,
         name="Bimodal process regression",
     ):
         super().__init__(name=name)
@@ -98,12 +99,15 @@ class BimodalRegression(Model):
             self.nminusd = Param("n-d", float(n - self.num_data), Logexp())
         else:
             self.nminusd = Param("n-d", float(n), Logexp())
+            # self.nminusd = Param("n-d", float(n))
+            # self.nminusd.constrain_positive()
         self.link_parameter(self.nminusd)
 
         # Inference
         self.inference_method = ExactBimodalInference()
         self.posterior = None
         self._log_marginal_likelihood = None
+        self.noise_var = noise_var
 
         # Insert property for plotting (not used)
         self.Y_metadata = None
@@ -175,6 +179,7 @@ class BimodalRegression(Model):
                 self.Y_normalized,
                 self.nminusd + self.num_data,
                 self.mean_function,
+                variance=self.noise_var,
             )
         )
         self.kern.update_gradients_full(grad_dict["dL_dK"], self.X)

@@ -18,13 +18,13 @@ class ExactHeavisideInference(LatentFunctionInference):
     summarizes the posterior
     """
 
-    def inference(self, kern, X, Y, n, mean_function=None, K=None):
+    def inference(self, kern, X, Y, n, mean_function=None, K=None, variance=0.1):
         m = 0 if mean_function is None else mean_function.f(X)
         K = kern.K(X) if K is None else K
 
         YYT_factor = Y - m
         Ky = K.copy()
-        diag.add(Ky, 1e-8)
+        diag.add(Ky, variance + 1e-8)
 
         # Posterior representation
         Wi, LW, LWi, W_logdet = pdinv(Ky)
@@ -35,8 +35,10 @@ class ExactHeavisideInference(LatentFunctionInference):
         # Log marginal
         dy = Y.shape[0]
         D = Y.shape[1]
+        if n == dy:  # Edge case
+            n += dy * np.finfo(float).epsneg
         if beta >= n:
-            log_marginal = np.finfo(float).min
+            log_marginal = np.full(beta.shape, np.finfo(float).min)
         else:
             log_marginal = 0.5 * (
                 (n - dy) * np.log(1 - beta / n) - dy * np.log(n * np.pi)
@@ -50,7 +52,9 @@ class ExactHeavisideInference(LatentFunctionInference):
         ):  # Use the gradient of a Gaussian distribution to push us back towards
             # realistic values
             dL_dK = 0.5 * (tdot(alpha) - D * Wi)
-            dL_dn = 0
+            dL_dn = 10 * (
+                0.5 * (digamma(1 + n / 2) - digamma(1 + (n - dy) / 2)) - dy / (2 * n)
+            )
             dL_dm = alpha
         else:
             dL_dK = 0.5 * (n - dy) * tdot(alpha) / (n - beta) - 0.5 * D * Wi
@@ -61,5 +65,6 @@ class ExactHeavisideInference(LatentFunctionInference):
             dL_dn -= dy / (2 * n)
             dL_dm = -(n - dy) * alpha / (n - beta)
         gradients = {"dL_dK": dL_dK, "dL_dn": dL_dn, "dL_dm": dL_dm}
+        # print(n, beta, dL_dn, dy, log_marginal)
 
         return posterior, log_marginal, gradients

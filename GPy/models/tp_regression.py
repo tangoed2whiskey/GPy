@@ -37,7 +37,17 @@ class TPRegression(Model):
 
     """
 
-    def __init__(self, X, Y, kernel=None, deg_free=5., normalizer=None, mean_function=None, name='TP regression'):
+    def __init__(
+        self,
+        X,
+        Y,
+        kernel=None,
+        deg_free=5.0,
+        normalizer=None,
+        noise_var=1.0,
+        mean_function=None,
+        name="TP regression",
+    ):
         super(TPRegression, self).__init__(name=name)
         # X
         assert X.ndim == 2
@@ -58,8 +68,10 @@ class TPRegression(Model):
         if Y.shape[0] != self.num_data:
             # There can be cases where we want inputs than outputs, for example if we have multiple latent
             # function values
-            warnings.warn("There are more rows in your input data X, \
-                                 than in your output data Y, be VERY sure this is what you want")
+            warnings.warn(
+                "There are more rows in your input data X, \
+                                 than in your output data Y, be VERY sure this is what you want"
+            )
         self.output_dim = self.Y.shape[1]
 
         # Kernel
@@ -72,7 +84,9 @@ class TPRegression(Model):
             warnings.warn(
                 "Your kernel has a different input dimension {} then the given X dimension {}. Be very sure this is "
                 "what you want and you have not forgotten to set the right input dimenion in your kernel".format(
-                    self.kern._effective_input_dim, self.X.shape[1]))
+                    self.kern._effective_input_dim, self.X.shape[1]
+                )
+            )
 
         # Mean function
         self.mean_function = mean_function
@@ -83,13 +97,14 @@ class TPRegression(Model):
             self.link_parameter(mean_function)
 
         # Degrees of freedom
-        self.nu = Param('deg_free', float(deg_free), Logexp())
+        self.nu = Param("deg_free", float(deg_free), Logexp())
         self.link_parameter(self.nu)
 
         # Inference
         self.inference_method = ExactStudentTInference()
         self.posterior = None
         self._log_marginal_likelihood = None
+        self.noise_var = noise_var
 
         # Insert property for plotting (not used)
         self.Y_metadata = None
@@ -158,16 +173,20 @@ class TPRegression(Model):
             This method is not designed to be called manually, the framework is set up to automatically call this method upon changes to parameters, if you call
             this method yourself, there may be unexpected consequences.
         """
-        self.posterior, self._log_marginal_likelihood, grad_dict = self.inference_method.inference(self.kern,
-                                                                                                   self.X,
-                                                                                                   self.Y_normalized,
-                                                                                                   self.nu + 2 + np.finfo(
-                                                                                                       float).eps,
-                                                                                                   self.mean_function)
-        self.kern.update_gradients_full(grad_dict['dL_dK'], self.X)
+        self.posterior, self._log_marginal_likelihood, grad_dict = (
+            self.inference_method.inference(
+                self.kern,
+                self.X,
+                self.Y_normalized,
+                self.nu + 2 + np.finfo(float).eps,
+                self.mean_function,
+                variance=self.noise_var,
+            )
+        )
+        self.kern.update_gradients_full(grad_dict["dL_dK"], self.X)
         if self.mean_function is not None:
-            self.mean_function.update_gradients(grad_dict['dL_dm'], self.X)
-        self.nu.gradient = grad_dict['dL_dnu']
+            self.mean_function.update_gradients(grad_dict["dL_dm"], self.X)
+            self.nu.gradient = grad_dict["dL_dnu"]
 
     def log_likelihood(self):
         """
@@ -189,8 +208,12 @@ class TPRegression(Model):
                         \frac{\nu + \beta - 2}{\nu + N - 2}K_{x*x*} - K_{xx*}(K_{xx})^{-1}K_{xx*}\right)
             \nu := \texttt{Degrees of freedom}
         """
-        mu, var = self.posterior._raw_predict(kern=self.kern if kern is None else kern, Xnew=Xnew,
-                                              pred_var=self._predictive_variable, full_cov=full_cov)
+        mu, var = self.posterior._raw_predict(
+            kern=self.kern if kern is None else kern,
+            Xnew=Xnew,
+            pred_var=self._predictive_variable,
+            full_cov=full_cov,
+        )
         if self.mean_function is not None:
             mu += self.mean_function.f(Xnew)
         return mu, var
@@ -225,7 +248,9 @@ class TPRegression(Model):
 
         # Un-apply normalization
         if self.normalizer is not None:
-            mu, var = self.normalizer.inverse_mean(mu), self.normalizer.inverse_variance(var)
+            mu, var = self.normalizer.inverse_mean(
+                mu
+            ), self.normalizer.inverse_variance(var)
 
         return mu, var
 
@@ -243,14 +268,25 @@ class TPRegression(Model):
         :rtype: [np.ndarray (Xnew x self.output_dim), np.ndarray (Xnew x self.output_dim)]
         """
         mu, var = self._raw_predict(X, full_cov=False, kern=kern)
-        quantiles = [stats.t.ppf(q / 100., self.nu + 2 + self.num_data) * np.sqrt(var) + mu for q in quantiles]
+        quantiles = [
+            stats.t.ppf(q / 100.0, self.nu + 2 + self.num_data) * np.sqrt(var) + mu
+            for q in quantiles
+        ]
 
         if self.normalizer is not None:
             quantiles = [self.normalizer.inverse_mean(q) for q in quantiles]
 
         return quantiles
 
-    def posterior_samples(self, X, size=10, full_cov=False, Y_metadata=None, likelihood=None, **predict_kwargs):
+    def posterior_samples(
+        self,
+        X,
+        size=10,
+        full_cov=False,
+        Y_metadata=None,
+        likelihood=None,
+        **predict_kwargs
+    ):
         """
         Samples the posterior GP at the points X, equivalent to posterior_samples_f due to the absence of a likelihood.
         """
@@ -271,13 +307,15 @@ class TPRegression(Model):
         """
         mu, var = self._raw_predict(X, full_cov=full_cov, **predict_kwargs)
         if self.normalizer is not None:
-            mu, var = self.normalizer.inverse_mean(mu), self.normalizer.inverse_variance(var)
+            mu, var = self.normalizer.inverse_mean(
+                mu
+            ), self.normalizer.inverse_variance(var)
 
         def sim_one_dim(m, v):
             nu = self.nu + 2 + self.num_data
             v = np.diag(v.flatten()) if not full_cov else v
             Z = np.random.multivariate_normal(np.zeros(X.shape[0]), v, size).T
-            g = np.tile(np.random.gamma(nu / 2., 2. / nu, size), (X.shape[0], 1))
+            g = np.tile(np.random.gamma(nu / 2.0, 2.0 / nu, size), (X.shape[0], 1))
             return m + Z / np.sqrt(g)
 
         if self.output_dim == 1:

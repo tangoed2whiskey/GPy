@@ -43,6 +43,7 @@ class HeavisideRegression(Model):
         n=2.0,
         normalizer=None,
         mean_function=None,
+        noise_var=1.0,
         name="Heaviside process regression",
     ):
         super().__init__(name=name)
@@ -104,6 +105,7 @@ class HeavisideRegression(Model):
         self.inference_method = ExactHeavisideInference()
         self.posterior = None
         self._log_marginal_likelihood = None
+        self.noise_var = noise_var
 
         # Insert property for plotting (not used)
         self.Y_metadata = None
@@ -175,6 +177,7 @@ class HeavisideRegression(Model):
                 self.Y_normalized,
                 self.nminusd + self.num_data,
                 self.mean_function,
+                variance=self.noise_var,
             )
         )
         self.kern.update_gradients_full(grad_dict["dL_dK"], self.X)
