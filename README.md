@@ -1,5 +1,9 @@
 # GPy
 
+This is a fork of the popular [GPy](http://sheffieldml.github.io/GPy/) repository to support the forthcoming paper "Beyond what's normal: fully consistent alternatives to Gaussian process regression". This fork introduces Bimodal and Heaviside process regressors alongisde the traditional Gaussian process regression (and Student t regression) already implemented in the repository. These can be accessed using `GPy.models.BimodalRegression` and `GPy.models.HeavisideRegression`, with very similar interfaces to the Gaussian process regression and Student t regression classes.
+
+## Original repo README follows
+
 The Gaussian processes framework in Python.
 
 * GPy [homepage](http://sheffieldml.github.io/GPy/)
@@ -9,13 +13,6 @@ The Gaussian processes framework in Python.
 * Travis-CI [unit-tests](https://travis-ci.org/SheffieldML/GPy)
 * [![licence](https://img.shields.io/badge/licence-BSD-blue.svg)](http://opensource.org/licenses/BSD-3-Clause)
   [![Research software impact](http://depsy.org/api/package/pypi/GPy/badge.svg)](http://depsy.org/package/python/GPy)
-
-## Status
-
-| Branch | travis-ci.org | ci.appveyor.com | coveralls.io | codecov.io |
-| --- | --- | --- | --- | --- |
-| Default branch (`devel`) | [![travis-devel](https://travis-ci.org/SheffieldML/GPy.svg?branch=devel)](https://travis-ci.org/SheffieldML/GPy/branches) | [![appveyor-devel](https://ci.appveyor.com/api/projects/status/662o6tha09m2jix3/branch/devel?svg=true)](https://ci.appveyor.com/project/mzwiessele/gpy/branch/devel) | [![coveralls-devel](https://coveralls.io/repos/github/SheffieldML/GPy/badge.svg?branch=devel)](https://coveralls.io/github/SheffieldML/GPy?branch=devel) | [![codecov-devel](http://codecov.io/github/SheffieldML/GPy/coverage.svg?branch=devel)](http://codecov.io/github/SheffieldML/GPy?branch=devel) |
-| Deployment branch (`deploy`) | [![travis-deploy](https://travis-ci.org/SheffieldML/GPy.svg?branch=deploy)](https://travis-ci.org/SheffieldML/GPy/branches) | [![appveyor-deploy](https://ci.appveyor.com/api/projects/status/662o6tha09m2jix3/branch/deploy?svg=true)](https://ci.appveyor.com/project/mzwiessele/gpy/branch/deploy) | [![coveralls-deploy](https://coveralls.io/repos/github/SheffieldML/GPy/badge.svg?branch=deploy)](https://coveralls.io/github/SheffieldML/GPy?branch=deploy) | [![codecov-deploy](http://codecov.io/github/SheffieldML/GPy/coverage.svg?branch=deploy)](http://codecov.io/github/SheffieldML/GPy?branch=deploy) |
 
 ## What's new:
 
