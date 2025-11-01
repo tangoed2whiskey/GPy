@@ -1,6 +1,8 @@
 # GPy
 
-This is a fork of the popular [GPy](http://sheffieldml.github.io/GPy/) repository to support the forthcoming paper "Beyond what's normal: fully consistent alternatives to Gaussian process regression". This fork introduces Bimodal and Heaviside process regressors alongisde the traditional Gaussian process regression (and Student t regression) already implemented in the repository. These can be accessed using `GPy.models.BimodalRegression` and `GPy.models.HeavisideRegression`, with very similar interfaces to the Gaussian process regression and Student t regression classes.
+This is a fork of the popular [GPy](http://sheffieldml.github.io/GPy/) repository to support the forthcoming paper "Beyond What's Normal: Bimodal and Heaviside Alternatives to Gaussian Process Regression". This fork introduces Bimodal and Heaviside process regressors alongisde the traditional Gaussian process regression (and Student t regression) already implemented in the repository. These can be accessed using `GPy.models.BimodalRegression` and `GPy.models.HeavisideRegression`, with very similar interfaces to the Gaussian process regression and Student t regression classes.
+
+To install, clone this repository and navigate to the root directory. Install locally using `pip install .` or `uv pip install .`, preferably in a clean `conda`, `uv`, or `venv` environment.
 
 ## Original repo README follows
 
