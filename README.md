@@ -4,6 +4,8 @@ This is a fork of the popular [GPy](http://sheffieldml.github.io/GPy/) repositor
 
 To install, clone this repository and navigate to the root directory. Install locally using `pip install .` or `uv pip install .`, preferably in a clean `conda`, `uv`, or `venv` environment.
 
+Note that running the example notebooks in `benchmarks/regression` requires a working LaTeX install on the local system, e.g. via [MiKTeX](https://miktex.org/download).
+
 ## Original repo README follows
 
 The Gaussian processes framework in Python.
